@@ -82,9 +82,28 @@ describe("SolidGrowth", function () {
                 });
             }
             for (let index = 0; index <= 11; index++) {
-                console.log(`${index}: ${wallets[index].account.address} (${Number(await usdt_instance.read.balanceOf([wallets[index].account.address])) / (10 ** 18)} USDT)`);
+                console.log(`${index}. ${wallets[index].account.address} (${Number(await usdt_instance.read.balanceOf([wallets[index].account.address])) / (10 ** 18)} USDT)`);
             }
             console.log(`SolidGrowth: ${solidgrowth_instance.address} (${Number(await usdt_instance.read.balanceOf([solidgrowth_instance.address])) / (10 ** 18)} USDT)`);
+        });
+    });
+
+    describe("Validate URI", function () {
+        it("Update defaultURI & show URI", async function () {
+            const { owner, wallet1, wallet2, usdt_instance, solidgrowth_instance } = await setupDeploy();
+
+            const amountInvest = parseEther("1000");
+            await usdt_instance.write.approve([solidgrowth_instance.address, amountInvest], {
+                account: wallet1.account.address
+            });
+
+            await usdt_instance.write.transfer([wallet1.account.address, amountInvest]);
+            await solidgrowth_instance.write.invest([addressNull, owner.account.address, amountInvest], {
+                account: wallet1.account.address
+            });
+            expect(await solidgrowth_instance.read.tokenURI([1n])).to.equal("");
+            await solidgrowth_instance.write.updateBaseURI(["ipfs://test"]);
+            expect(await solidgrowth_instance.read.tokenURI([1n])).to.equal("ipfs://test");
         });
     });
 });
