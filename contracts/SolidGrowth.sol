@@ -45,6 +45,12 @@ contract SolidGrowth is ERC721AQueryable, Ownable, ReentrancyGuard {
         defaultURI = _defaultURI;
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721A, IERC721A) returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        return defaultURI;
+    }
+
     function _startTokenId() internal override view virtual returns (uint256) {
         return 1;
     }
