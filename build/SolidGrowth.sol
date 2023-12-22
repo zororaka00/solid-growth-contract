@@ -1894,7 +1894,7 @@ contract SolidGrowth is ERC721AQueryable, Ownable, ReentrancyGuard {
     uint256 public constant ALLOCATED_INVESTOR = 540; // 54%
     uint256 public constant ALLOCATED_RECRUITER = 450; // 45%
     uint256 public constant ALLOCATED_OWNER = 10; // 1%
-    uint256[] public sharePercentage = [
+    uint256[] public sharePercentageRecruiter = [ // 45% Allocated Recruited
         100, // 10%
         50, // 5%
         30, // 3%
@@ -1912,7 +1912,7 @@ contract SolidGrowth is ERC721AQueryable, Ownable, ReentrancyGuard {
     mapping(address => address) public lineRecruiter;
     mapping(uint256 => uint256) public nftProofInvestment;
 
-    event Invested(address indexed referrer, address indexed investor, uint256 indexed amount);
+    event Invested(address indexed developerAddress, address indexed referrer, address indexed investor, uint256 amount);
     event Claim(address indexed who, uint256 indexed amount);
 
     constructor(address _tokenAddress) ERC721A("Solid Growth NFT", "SGNFT") Ownable(_msgSender()) {
@@ -1955,15 +1955,17 @@ contract SolidGrowth is ERC721AQueryable, Ownable, ReentrancyGuard {
         address ownerAddress = owner();
         
         tokenUSDT.transferFrom(who, address(this), _amount * ALLOCATED_INVESTOR / 1000);
-        address uplineAddress = _referrer;
-        uint256 baseShareProfitRecruiter = _amount * ALLOCATED_RECRUITER / 1000;
-        uint256 shareProfitRecruiter = baseShareProfitRecruiter;
-
+        uint256 shareProfitRecruiter = _amount * ALLOCATED_RECRUITER / 1000;
+        address uplineAddress;
         if (lineRecruiter[who] == address(0)) {
-            lineRecruiter[who] = uplineAddress;
+            lineRecruiter[who] = _referrer;
+            uplineAddress = _referrer;
+        } else {
+            uplineAddress = lineRecruiter[who];
         }
-        for (uint256 i = 0; i < sharePercentage.length; i++) {
-            uint256 profit = baseShareProfitRecruiter * sharePercentage[i] / 1000;
+
+        for (uint256 i = 0; i < sharePercentageRecruiter.length; i++) {
+            uint256 profit = _amount * sharePercentageRecruiter[i] / 1000;
             if (uplineAddress == ownerAddress) {
                 if (_developerAddress == address(0)) {
                     tokenUSDT.transferFrom(who, ownerAddress, shareProfitRecruiter);
@@ -1988,7 +1990,7 @@ contract SolidGrowth is ERC721AQueryable, Ownable, ReentrancyGuard {
         _shareOwner(ownerAddress, who, _developerAddress, _amount);
         _claim();
 
-        emit Invested(_referrer, who, _amount);
+        emit Invested(_developerAddress, _referrer, who, _amount);
     }
 
     function claim() external nonReentrant {
